@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using BookStore.API.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace BookStore.API.Controllers
@@ -11,5 +8,32 @@ namespace BookStore.API.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
+        public readonly IBooksRepository _booksRepository;
+        public BooksController(IBooksRepository booksRepository)
+        {
+            _booksRepository = booksRepository;
+        }
+
+        [HttpGet("AllBooks")]
+        public async Task<IActionResult> GetAllBooks()
+        {
+            var books = await _booksRepository.GetAllBooksAsync();
+            return Ok(books);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetBookById([FromRoute] int id)
+        {
+            var book = await _booksRepository.GetBookByIdAsync(id);
+            if (book != null)
+            {
+                return Ok(book);
+            }
+            else
+            {
+                return NotFound();
+
+            }
+        }
     }
 }

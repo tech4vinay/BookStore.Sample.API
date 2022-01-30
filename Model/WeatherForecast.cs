@@ -1,6 +1,6 @@
 using System;
 
-namespace BookStore.API
+namespace BookStore.API.Model
 {
     public class WeatherForecast
     {
