@@ -1,12 +1,16 @@
+using BookStore.API.AuthenticationManager;
 using BookStore.API.Data;
 using BookStore.API.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace BookStore.API
 {
@@ -23,12 +27,42 @@ namespace BookStore.API
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddDbContext<BookStoreDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("BookStoreDB")));
+            services.AddDbContext<BookStoreDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("BookStoreDB")), ServiceLifetime.Singleton);
             services.AddControllers();
+            services.AddSingleton(Configuration);
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetValue<string>("PrivateKey"))),
+                    ValidateAudience = false,
+                    ValidateIssuer = false
+                };
+            });
+            services.AddSingleton<IJwtAuthManager, JwtAuthManager>();
             services.AddTransient<IBooksRepository, BooksRepository>();
+            services.AddTransient<IUsersRepository, UsersRepository>();
+
+
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "BookStore.API", Version = "v1" });
+            });
+            services.AddCors(option =>
+            {
+                option.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                });
+
             });
         }
 
@@ -44,7 +78,11 @@ namespace BookStore.API
 
             app.UseHttpsRedirection();
 
+            app.UseCors();
+
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
