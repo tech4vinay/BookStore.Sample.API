@@ -1,4 +1,5 @@
-﻿using BookStore.API.Repositories;
+﻿using BookStore.API.Model;
+using BookStore.API.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -35,5 +36,20 @@ namespace BookStore.API.Controllers
 
             }
         }
+
+        [HttpPost("Add")]
+        public async Task<IActionResult> AddBook([FromBody] BookModel request)
+        {
+            var added = await _booksRepository.AddBookAsync(request);
+            if (added)
+            {
+                return Ok();
+            }
+            else
+            {
+                return UnprocessableEntity();
+            }
+        }
+
     }
 }

@@ -34,5 +34,19 @@ namespace BookStore.API.Repositories
                 Description = b.Description
             }).FirstOrDefaultAsync();
         }
+
+        public async Task<bool> AddBookAsync(BookModel request)
+        {
+            var book = new Books
+            {
+                Title = request.Title,
+                Description = request.Description
+            };
+            _bookStoreDbContext.Books.Add(book);
+            await _bookStoreDbContext.SaveChangesAsync();
+            return book.Id > 0;
+
+        }
+
     }
 }
